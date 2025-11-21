@@ -1,0 +1,197 @@
+import os
+from dotenv import load_dotenv
+from langgraph.prebuilt import create_react_agent
+from typing import List
+from datetime import datetime, timedelta
+from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.tools import tool
+from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+import pickle
+load_dotenv()
+
+llm = ChatOpenAI(
+    model="gpt-3.5-turbo",
+)
+
+SCOPES = ['https://www.googleapis.com/auth/calendar']
+
+def get_calendar_service():
+    creds = None
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+            creds = flow.run_local_server(port=8000)
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)
+
+    return build('calendar', 'v3', credentials=creds)
+
+def get_calendar_for_day(day: str):
+    service = get_calendar_service()
+    start_of_day = f"{day}T00:00:00+05:30"
+    end_of_day = f"{day}T23:59:59+05:30"
+
+    events_result = service.events().list(
+        calendarId='primary',
+        timeMin=start_of_day,
+        timeMax=end_of_day,
+        singleEvents=True,
+        orderBy='startTime'
+    ).execute()
+    events = events_result.get('items', [])
+    
+    busy_slots = []
+    for event in events:
+        start = event['start'].get('dateTime')
+        end = event['end'].get('dateTime')
+        if start and end:
+            busy_slots.append((start, end))
+    return busy_slots
+
+
+def add_meeting(day: str, start: str, end: str):
+    service = get_calendar_service()
+    event = {
+        'summary': 'Meeting with Boss',
+        'description': 'Scheduled via AI assistant',
+        'start': {
+            'dateTime': start,
+            'timeZone': 'Asia/Kolkata',
+        },
+        'end': {
+            'dateTime': end,
+            'timeZone': 'Asia/Kolkata',
+        },
+        'attendees': [],
+        'reminders': {
+            'useDefault': True,
+        },
+    }
+    event = service.events().insert(calendarId='primary', body=event).execute()
+    return f"📅 Meeting booked at {start} for {(datetime.fromisoformat(end) - datetime.fromisoformat(start)).seconds // 60} minutes."
+
+
+def get_free_busy(day: str) -> List[tuple]:
+    busy_times = get_calendar_for_day(day)
+    available_slots = []
+    all_day_start = datetime.fromisoformat(f"{day}T09:00:00")
+    current = all_day_start
+    for start_str, end_str in sorted(busy_times):
+        busy_start = datetime.fromisoformat(start_str)
+        if (busy_start - current).total_seconds() >= 1800:
+            available_slots.append((current.isoformat(), busy_start.isoformat()))
+        current = datetime.fromisoformat(end_str)
+    end_of_day = datetime.fromisoformat(f"{day}T17:00:00")
+    if (end_of_day - current).total_seconds() >= 1800:
+        available_slots.append((current.isoformat(), end_of_day.isoformat()))
+    return available_slots
+
+
+def is_slot_available(proposed_time: str, duration_minutes: int = 30) -> bool:
+    proposed_start = datetime.fromisoformat(proposed_time)
+    proposed_end = proposed_start + timedelta(minutes=duration_minutes)
+    day = proposed_start.date().isoformat()
+    free_slots = get_free_busy(day)
+    for slot_start, slot_end in free_slots:
+        start = datetime.fromisoformat(slot_start)
+        end = datetime.fromisoformat(slot_end)
+        if start <= proposed_start and end >= proposed_end:
+            return True
+    return False
+
+
+def find_next_available_slot(after_time: str, duration_minutes: int = 30) -> str:
+    proposed_start = datetime.fromisoformat(after_time)
+    for day_offset in range(0, 30):
+        check_day = (proposed_start + timedelta(days=day_offset)).date().isoformat()
+        free_slots = get_free_busy(check_day)
+        for slot_start, slot_end in free_slots:
+            start = datetime.fromisoformat(slot_start)
+            end = datetime.fromisoformat(slot_end)
+            if start >= proposed_start and (end - start).total_seconds() >= duration_minutes * 60:
+                return start.isoformat()
+    return "No slots available."
+
+
+def book_meeting(time: str, duration: int) -> str:
+    end_time = datetime.fromisoformat(time) + timedelta(minutes=duration)
+    day = datetime.fromisoformat(time).date().isoformat()
+    add_meeting(day, time, end_time.isoformat())
+    return f"📅 Meeting booked at {time} for {duration} minutes."
+
+
+def suggest_booking(user_input: str) -> str:
+    try:
+        if "|" in user_input:
+            time, duration_str = user_input.split("|")
+            duration = int(duration_str.strip())
+        else:
+            time = user_input.strip()
+            duration = 30
+
+        proposed_start = datetime.fromisoformat(time)
+        hour = proposed_start.hour
+
+        if hour < 9 or hour >= 17 or (duration > (17-hour)*60 - proposed_start.minute):
+            next_slot = find_next_available_slot(time, duration)
+            return (f"⏰ The boss's working hours are from 9 AM to 5 PM.\n"
+                    f"Closest available time is {next_slot}.")
+
+        if is_slot_available(time, duration):
+            return book_meeting(time, duration)
+        else:
+            next_slot = find_next_available_slot(time, duration)
+            if "No slots" in next_slot:
+                return "Boss is not available. Please try another day."
+            return (f"❌ Boss has another meeting at that time.\n"
+                    f"📌 Nearest available time is {next_slot}.")
+    except Exception:
+        print("yes")
+        return "❗ Invalid input. Use format like '2025-07-12T11:00:00|60' (datetime|duration)."
+
+
+@tool
+def tool_suggest_booking_for_boss(time: str) -> str:
+    """Suggests a meeting time or returns the nearest available slot if not free."""
+    return suggest_booking(time)
+
+
+meeting_scheduler_agent = create_react_agent(
+    model=llm,
+    tools=[tool_suggest_booking_for_boss],
+    prompt="""
+You are a helpful AI assistant responsible for scheduling meetings with the boss.
+
+Follow these steps:
+1. Accept input like \"11am on 12 July 2025\" or \"9am on 13 July for 1 hour\".
+2. If the year is not mentioned, take it as 2025. If the duration is not mentioned, take it as 30 min.
+3. Convert the given time and duration to ISO format (e.g., \"2025-07-12T11:00:00|60\").
+4. Use the `tool_suggest_booking_for_boss` tool only once with the converted time string.
+5. If output you get is  Meeting booked at \"time\" for \"duration\" minutes, tell it to user and exit. Or
+6. If output get is f\"⏰ The boss's working hours are from 9 AM to 5 PM. Closest available time is \"next_slot\"., Do not book anything in this case. tell the user the same in layman format without asking any question whether to book.
+
+**Important:**
+- ❌Do NOT output code or code blocks.
+- ❌Do NOT use print statements.
+- ✅Strictle call the tool directly using the tool call mechanism.
+- ✅Your response should only be the result of the tool call, in plain language for the user.
+""",
+    name="meeting_scheduler_agent"
+)
+
+if __name__ == "__main__":
+    prompt = "Schedule a meeting on 15th of July from 9:30 AM for 1 hour"
+    result = meeting_scheduler_agent.invoke({
+        "messages": [{"role": "user", "content": prompt}]
+    })
+    print(result)
+

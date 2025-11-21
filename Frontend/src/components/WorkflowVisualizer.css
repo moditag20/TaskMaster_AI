@@ -1,0 +1,140 @@
+.workflow-visualizer {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.workflow-visualizer.loading,
+.workflow-visualizer.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.workflow-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.workflow-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1f2937;
+}
+
+.step-count {
+  background: #6366f1;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.workflow-steps-container {
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 8px;
+  margin-bottom: 24px;
+}
+
+.workflow-steps-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.workflow-steps-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.workflow-steps-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.workflow-steps-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.final-response-container {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 3px solid #6366f1;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.final-response-header {
+  margin-bottom: 16px;
+}
+
+.final-response-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.final-response-header h3::before {
+  content: '✨';
+  font-size: 1.5rem;
+}
+
+.final-response-content {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.response-text {
+  color: #374151;
+  line-height: 1.7;
+  font-size: 1rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+@media (max-width: 768px) {
+  .workflow-visualizer {
+    padding: 16px;
+  }
+
+  .workflow-steps-container {
+    max-height: 400px;
+  }
+
+  .workflow-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
