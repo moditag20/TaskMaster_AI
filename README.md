@@ -1,35 +1,9 @@
 # 🎯 TaskMaster AI - Agentic AI System
 
-<div align="center">
-
-![Python](https://img.shields.io/badge/Python-3.10-blue?style=for-the-badge&logo=python)
-![React](https://img.shields.io/badge/React-19.2-blue?style=for-the-badge&logo=react)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.116-green?style=for-the-badge&logo=fastapi)
-![LangGraph](https://img.shields.io/badge/LangGraph-0.5.1-purple?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
-
 **An intelligent multi-agent AI system that orchestrates specialized agents to handle complex tasks through a supervisor pattern**
 
-[Features](#-features) • [Architecture](#-architecture) • [Setup](#-setup) • [Usage](#-usage) • [Tech Stack](#-tech-stack)
 
 </div>
-
----
-
-## 📋 Table of Contents
-
-- [Project Overview](#-project-overview)
-- [Features](#-features)
-- [Architecture](#-architecture)
-- [Tech Stack](#-tech-stack)
-- [Backend Setup](#-backend-setup)
-- [Frontend Setup](#-frontend-setup)
-- [Agentic AI Workflow](#-agentic-ai-workflow)
-- [API Endpoints](#-api-endpoints)
-- [Project Structure](#-project-structure)
-- [Contributing](#-contributing)
-
----
 
 ## 🚀 Project Overview
 
