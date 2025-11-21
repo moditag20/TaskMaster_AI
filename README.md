@@ -102,7 +102,7 @@ The system implements a **hierarchical supervisor pattern** where:
 ```
 User Request
     ↓
-Supervisor Agent (GPT-3.5-turbo)
+Supervisor Agent (GPT-4o)
     ↓
 [Analyzes Request]
     ↓
@@ -194,7 +194,7 @@ The system uses **LangGraph** for stateful agent orchestration:
 ### Step 1: Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/moditag20/TaskMaster_AI.git
 cd TaskMaster_AI
 ```
 
@@ -204,25 +204,8 @@ cd TaskMaster_AI
 cd Backend
 ```
 
-### Step 3: Create Virtual Environment
 
-```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
-
-# macOS/Linux
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### Step 4: Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### Step 5: Configure Environment Variables
+### Step 3: Configure Environment Variables
 
 Create a `.env` file in the `Backend/` directory:
 
@@ -253,21 +236,7 @@ PORT=8000
 HOST=0.0.0.0
 ```
 
-#### Environment Variables Explanation
-
-| Variable | Description | Required | Example |
-|----------|-------------|----------|---------|
-| `OPENAI_API_KEY` | OpenAI API key for GPT-3.5-turbo | ✅ Yes | `sk-proj-...` |
-| `GOOGLE_API_KEY` | Google API key for Gemini models | ✅ Yes | `AIza...` |
-| `TAVILY_API_KEY` | Tavily API key for news search | ✅ Yes | `tvly-...` |
-| `EMAIL_HOST` | SMTP server hostname | ✅ Yes* | `smtp.gmail.com` |
-| `EMAIL_PORT` | SMTP server port | ✅ Yes* | `587` |
-| `EMAIL_USER` | Email account for sending | ✅ Yes* | `user@gmail.com` |
-| `EMAIL_PASS` | Email account password/app password | ✅ Yes* | `app-password` |
-
-*Required only if using email functionality
-
-### Step 6: Google Calendar Setup (Optional)
+### Step 4: Google Calendar Setup (Optional)
 
 > **⚠️ Important**: If you want to use the Meeting Scheduler agent, you need to set up Google Calendar API credentials. This is **optional** - you can skip this step if you don't need calendar functionality.
 
@@ -284,7 +253,7 @@ The Meeting Scheduler agent requires two files:
 
 #### Step-by-Step Guide
 
-##### Step 6.1: Create a Google Cloud Project
+##### Step 4.1: Create a Google Cloud Project
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Click the project dropdown at the top of the page
@@ -293,7 +262,7 @@ The Meeting Scheduler agent requires two files:
 5. Click **"Create"**
 6. Wait for the project to be created and select it
 
-##### Step 6.2: Enable Google Calendar API
+##### Step 4.2: Enable Google Calendar API
 
 1. In the Google Cloud Console, navigate to **"APIs & Services"** → **"Library"**
 2. Search for **"Google Calendar API"**
@@ -301,7 +270,7 @@ The Meeting Scheduler agent requires two files:
 4. Click **"Enable"** button
 5. Wait for the API to be enabled (this may take a few moments)
 
-##### Step 6.3: Create OAuth 2.0 Credentials
+##### Step 4.3: Create OAuth 2.0 Credentials
 
 1. Navigate to **"APIs & Services"** → **"Credentials"**
 2. Click **"+ CREATE CREDENTIALS"** at the top
@@ -327,7 +296,7 @@ The Meeting Scheduler agent requires two files:
    - This downloads a file (usually named something like `client_secret_xxx.json`)
    - **Rename this file to `credentials.json`**
 
-##### Step 6.4: Place credentials.json in the Correct Location
+##### Step 4.4: Place credentials.json in the Correct Location
 
 1. **Navigate to the Backend/agents directory:**
    ```bash
@@ -359,7 +328,7 @@ The Meeting Scheduler agent requires two files:
 
    You should see `credentials.json` listed.
 
-##### Step 6.5: First-Time Authentication (Generate token.pickle)
+##### Step 4.5: First-Time Authentication (Generate token.pickle)
 
 The `token.pickle` file is **automatically generated** on the first use of the Meeting Scheduler agent. Here's what happens:
 
@@ -389,7 +358,7 @@ The `token.pickle` file is **automatically generated** on the first use of the M
    - Future requests will use this token automatically
    - The token refreshes automatically when it expires
 
-##### Step 6.6: Verify Setup
+##### Step 4.6: Verify Setup
 
 To verify everything is working:
 
@@ -400,102 +369,21 @@ python -c "from agents.meeting_scheduler import get_calendar_service; service = 
 
 If successful, you'll see the success message. If there are errors, check the troubleshooting section below.
 
-#### Security Notes
 
-> **🔒 Important Security Information:**
 
-1. **Never commit these files to Git:**
-   - `credentials.json` contains your OAuth client secret
-   - `token.pickle` contains your access tokens
-   - Both files are already added to `.gitignore` to prevent accidental commits
-
-2. **File Permissions:**
-   - Keep these files secure and don't share them
-   - If you suspect they're compromised, revoke and regenerate them in Google Cloud Console
-
-3. **Token Refresh:**
-   - The `token.pickle` file refreshes automatically
-   - If you see authentication errors, delete `token.pickle` and re-authenticate
-
-#### Troubleshooting Google Calendar Setup
-
-| Issue | Solution |
-|-------|----------|
-| `FileNotFoundError: credentials.json` | Ensure file is named exactly `credentials.json` and placed in `Backend/agents/` |
-| `token.pickle not found` | This is normal - it will be created on first use. Run the meeting scheduler once. |
-| Browser doesn't open | Manually open the authentication URL from the error message |
-| "Access blocked: This app's request is invalid" | Add your email as a test user in OAuth consent screen settings |
-| "Invalid credentials" | Verify `credentials.json` is valid JSON and not corrupted |
-| Port 8000 already in use | Change the port in `meeting_scheduler.py` line 32 or stop other services |
-| Token expired | Delete `token.pickle` and re-authenticate - it will be regenerated |
-
-### Step 7: Start the Backend Server
-
-#### Option A: Direct Python Execution
+### Step 5: Run
 
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+# Windows
+docker build -t agenticai .
+docker run -p 8000:8000 agenticai
 ```
-
-The server will start at `http://localhost:8000`
-
-#### Option B: Docker Deployment
-
-1. **Build the Docker image:**
-
-```bash
-docker build -t taskmaster-backend .
-```
-
-2. **Run the container:**
-
-```bash
-docker run -d \
-  --name taskmaster-backend \
-  -p 8000:8000 \
-  --env-file .env \
-  -v $(pwd)/agents/credentials.json:/app/agents/credentials.json \
-  -v $(pwd)/agents/token.pickle:/app/agents/token.pickle \
-  taskmaster-backend
-```
-
-**Windows PowerShell:**
-```powershell
-docker run -d `
-  --name taskmaster-backend `
-  -p 8000:8000 `
-  --env-file .env `
-  -v ${PWD}/agents/credentials.json:/app/agents/credentials.json `
-  -v ${PWD}/agents/token.pickle:/app/agents/token.pickle `
-  taskmaster-backend
-```
-
-3. **Check container status:**
-
-```bash
-docker ps
-docker logs taskmaster-backend
-```
-
-### Step 8: Verify Backend is Running
 
 Open your browser and navigate to:
 - API Documentation: `http://localhost:8000/docs`
 - Alternative Docs: `http://localhost:8000/redoc`
 
 You should see the FastAPI interactive documentation.
-
-### Troubleshooting Backend Issues
-
-| Issue | Solution |
-|-------|----------|
-| Port already in use | Change port: `--port 9000` |
-| Module not found | Ensure virtual environment is activated |
-| API key errors | Verify `.env` file is in `Backend/` directory |
-| Email sending fails | Use app-specific password for Gmail |
-| Calendar API errors | Verify `credentials.json` exists and is valid |
-
----
 
 ## 💻 Frontend Setup
 
@@ -539,23 +427,6 @@ The development server will start at `http://localhost:5174` (or another availab
 Open your browser and navigate to:
 - Frontend: `http://localhost:5174`
 
-### Build for Production
-
-```bash
-npm run build
-```
-
-The built files will be in the `dist/` directory, ready to be served by any static file server.
-
-### Troubleshooting Frontend Issues
-
-| Issue | Solution |
-|-------|----------|
-| Cannot connect to API | Check `VITE_API_BASE_URL` matches backend URL |
-| CORS errors | Ensure backend CORS middleware allows your origin |
-| Port conflicts | Vite will automatically use next available port |
-
----
 
 ## 🔄 Agentic AI Workflow
 
@@ -695,122 +566,6 @@ async def run_supervisor(content: str, file: Optional[UploadFile]):
 
 ---
 
-## 📡 API Endpoints
-
-### POST `/supervisor`
-
-Main endpoint for supervisor agent workflow.
-
-**Request:**
-- `content` (form-data, string, required): User request text
-- `file` (form-data, file, optional): PDF or audio file
-
-**Response:**
-```json
-{
-  "result": {
-    "messages": [
-      {
-        "role": "user",
-        "content": "Summarize this PDF..."
-      },
-      {
-        "role": "assistant",
-        "content": "PDF summary here..."
-      }
-    ],
-    "summary": "Extracted summary...",
-    "news": "...",
-    "meeting_status": "..."
-  }
-}
-```
-
-**Example cURL:**
-```bash
-curl -X POST "http://localhost:8000/supervisor" \
-  -F "content=Summarize this PDF and email to user@example.com" \
-  -F "file=@document.pdf"
-```
-
-### POST `/review`
-
-Endpoint for sentiment analysis and feedback collection.
-
-**Request:**
-```json
-{
-  "user_input": "Great service, very helpful!"
-}
-```
-
-**Response:**
-```json
-{
-  "session_id": "uuid-here",
-  "response": "Thank you for your feedback! Please rate us from 1 to 5 stars ⭐",
-  "history": ["user input", "agent response"]
-}
-```
-
-**Example cURL:**
-```bash
-curl -X POST "http://localhost:8000/review" \
-  -H "Content-Type: application/json" \
-  -d '{"user_input": "This is amazing!"}'
-```
-
----
-
-## 📁 Project Structure
-
-```
-TaskMaster_AI/
-├── Backend/
-│   ├── agents/
-│   │   ├── __pycache__/
-│   │   ├── supervisor_agent.py      # Supervisor orchestration
-│   │   ├── summarizer.py            # PDF summarization agent
-│   │   ├── audio_summarizer.py      # Audio transcription & summarization
-│   │   ├── news_agent.py            # News search agent
-│   │   ├── email_sender.py          # Email sending agent
-│   │   ├── meeting_scheduler.py     # Calendar scheduling agent
-│   │   ├── sentiment.py             # Sentiment analysis agent
-│   │   ├── rating_store.py          # Rating storage utility
-│   │   ├── credentials.json         # Google Calendar OAuth (gitignored)
-│   │   └── token.pickle             # OAuth token (gitignored)
-│   ├── main.py                      # FastAPI application
-│   ├── requirements.txt             # Python dependencies
-│   ├── Dockerfile                   # Docker configuration
-│   ├── .env                         # Environment variables (gitignored)
-│   ├── ratings.json                 # Rating storage (generated)
-│   └── uploads/                     # Temporary file storage
-│
-├── Frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── WorkflowVisualizer.jsx   # Main workflow display
-│   │   │   ├── StepCard.jsx             # Individual step component
-│   │   │   ├── AgentBadge.jsx           # Agent badge component
-│   │   │   ├── InputForm.jsx            # Input form component
-│   │   │   └── *.css                    # Component styles
-│   │   ├── services/
-│   │   │   └── api.js                  # API service layer
-│   │   ├── App.jsx                     # Main app component
-│   │   ├── App.css                     # App styles
-│   │   ├── main.jsx                    # Entry point
-│   │   └── index.css                   # Global styles
-│   ├── package.json                   # Node dependencies
-│   ├── vite.config.js                 # Vite configuration
-│   ├── .env                           # Frontend env vars (optional)
-│   └── index.html                     # HTML template
-│
-├── graph.png                          # Architecture diagram
-└── README.md                          # This file
-```
-
----
-
 ## 🎯 Key Agent Capabilities
 
 ### 📄 PDF Summarizer Agent
@@ -856,48 +611,3 @@ TaskMaster_AI/
 - **Use Case**: Feedback analysis, customer service
 
 ---
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-
-- Follow PEP 8 for Python code
-- Use ESLint for JavaScript/React code
-- Add docstrings to functions
-- Update README if adding new features
-- Test all changes before submitting PR
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **LangChain** & **LangGraph** for agent orchestration framework
-- **OpenAI** for GPT models and Whisper
-- **Google** for Gemini models and Calendar API
-- **Tavily** for news search capabilities
-- **FastAPI** for the excellent web framework
-- **React** team for the amazing frontend framework
-
----
-
-<div align="center">
-
-**Built with ❤️ using Agentic AI**
-
-[⬆ Back to Top](#-taskmaster-ai---agentic-ai-system)
-
-</div>

@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 llm = ChatOpenAI(
-    model="gpt-3.5-turbo",)
+    model="gpt-4o",)
 
 PROMPT="""
 You are a supervisor managing five specialized agents:\n
