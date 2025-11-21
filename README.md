@@ -1,6 +1,6 @@
 # 🎯 TaskMaster AI - Agentic AI System
 
-**An intelligent multi-agent AI system that orchestrates specialized agents to handle complex tasks through a supervisor pattern**
+**An intelligent multi-agent AI system that orchestrates specialized agents to handle complex tasks through a supervisor pattern**<br><br>
 
 
 </div>
